@@ -1,0 +1,8 @@
+package com.nerflix.clone.dao;
+
+import com.nerflix.clone.entity.Video;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<Video,Long> {
+
+}
