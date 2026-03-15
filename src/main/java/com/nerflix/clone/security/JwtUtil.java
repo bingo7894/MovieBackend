@@ -17,7 +17,7 @@ public class JwtUtil {
 
     private  static final long JWT_TOKEN_VALIDITY = 24 * 60 * 60 * 1000;
 
-    @Value("${jwt.secret:defaultSecretKryForNetflixClone}")
+    @Value("${jwt.secret:defaultSecretKeyForNetflixClone12}")
     private String secret;
 
     private SecretKey getSigningKey(){
