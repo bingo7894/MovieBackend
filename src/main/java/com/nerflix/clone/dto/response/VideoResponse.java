@@ -25,7 +25,7 @@ public class VideoResponse {
     private List<String> categories;
     private Instant createdAt;
     private Instant updatedAt;
-    private Boolean isInWatchList;
+    private Boolean isInWatchlist;
 
     public  VideoResponse(
             Long id,
@@ -70,8 +70,8 @@ public class VideoResponse {
                 video.getCreatedAt(),
                 video.getUpdatedAt()
         );
-        if(video.getIsInWatchList() != null){
-          response.setIsInWatchList(video.getIsInWatchList());
+        if(video.getIsInWatchlist() != null){
+          response.setIsInWatchlist(video.getIsInWatchlist());
         }return  response;
     }
     

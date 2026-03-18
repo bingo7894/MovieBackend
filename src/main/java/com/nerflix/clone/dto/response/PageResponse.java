@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PageResponse<T> {
     private List<T> content;
-    private long totalElement;
+    private long totalElements;
     private int totalPages;
     private int number;
     private int size;
