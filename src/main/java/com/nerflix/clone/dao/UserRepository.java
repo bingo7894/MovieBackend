@@ -36,4 +36,17 @@ public interface UserRepository extends JpaRepository<User,Long> {
 
     @Query("SELECT v.id FROM User u JOIN u.watchList v WHERE u.email = :email AND v.id IN :videoIds")
     Set<Long> findWatchVideoIds(@Param("email") String email, List<Long> videoIds);
+
+
+    @Query(
+            "SELECT v FROM User u JOIN u.watchList v " +
+                    "WHERE u.id = :userId AND v.published = true AND (" +
+                    "LOWER(v.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                    "LOWER(v.description) LIKE LOWER(CONCAT('%', :search, '%')))"
+    )
+    Page<Video> searchWatchListByUserId(@Param("userId") Long userId, @Param("search") String search, Pageable pageable);
+
+
+    @Query("SELECT v FROM User u JOIN u.watchList v WHERE u.id = :userId AND v.published = true")
+    Page<Video> findWatchVideoUserId(Long userId, Pageable pageable);
 }

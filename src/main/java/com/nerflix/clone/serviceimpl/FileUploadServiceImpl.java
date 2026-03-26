@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.print.attribute.standard.Media;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -109,7 +108,7 @@ public class FileUploadServiceImpl implements FileUploadService {
         long rangeStart = range[0];
         long rangeEnd = range[1];
 
-        if(!idValidRange(rangeStart,rangeEnd,fileLength)){
+        if(!isValidRange(rangeStart,rangeEnd,fileLength)){
             return buildRangeNotSatisfiableResponse(fileLength);
         }
 
@@ -120,13 +119,13 @@ public class FileUploadServiceImpl implements FileUploadService {
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION,"inline; filename=\"" +filename+"\"")
                 .header(HttpHeaders.ACCEPT_RANGES,"bytes")
-                .header(HttpHeaders.CONTENT_RANGE,"bytes" + rangeStart + "-" + rangeEnd + "/" + fileLength)
+                .header(HttpHeaders.CONTENT_RANGE,"bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength)
                 .header(HttpHeaders.CONTENT_LENGTH,String.valueOf(contentLength))
                 .body(rangeResource);
 
     }
 
-    private boolean idValidRange(long rangeStart, long rangeEnd, long fileLength) {
+    private boolean isValidRange(long rangeStart, long rangeEnd, long fileLength) {
         return  rangeStart <= rangeEnd && rangeStart >= 0 && rangeEnd < fileLength;
     }
 

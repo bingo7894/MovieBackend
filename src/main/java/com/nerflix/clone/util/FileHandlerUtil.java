@@ -58,8 +58,8 @@ public class FileHandlerUtil {
         return "image/jpeg";
     }
 
-    public static long[] parseRangeHeader(String rangeHader, long fileLength) {
-        String[] ranges = rangeHader.replace("bytes=", "").split("-");
+    public static long[] parseRangeHeader(String rangeHeader, long fileLength) {
+        String[] ranges = rangeHeader.replace("bytes=", "").split("-");
         long rangeStart = Long.parseLong(ranges[0]);
         long rangeEnd = ranges.length > 1 &&
                 !ranges[1].isEmpty() ? Long.parseLong(ranges[1]) : fileLength - 1;
