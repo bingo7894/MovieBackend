@@ -42,8 +42,8 @@ public class VideoController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/admin/{id}")
-    public ResponseEntity<MessageResponse> updateVideoByAdmin(@PathVariable Long id, @Valid @RequestBody VideoRequest videoRequest){
+    @PatchMapping("/admin/{id}")
+    public ResponseEntity<MessageResponse> updateVideoByAdmin(@PathVariable Long id, @RequestBody VideoRequest videoRequest){
         return ResponseEntity.ok(videoService.updateVideoByAdmin(id,videoRequest));
     }
 

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -64,19 +65,34 @@ public class VideoServiceImpl implements VideoService {
     }
 
     @Override
+    @Transactional
     public MessageResponse updateVideoByAdmin(Long id, VideoRequest videoRequest) {
-        Video video = new Video();
-        video.setId(id);
-        video.setTitle(videoRequest.getTitle());
-        video.setDescription(videoRequest.getDescription());
-        video.setYear(videoRequest.getYear());
-        video.setRating(videoRequest.getRating());
-        video.setDuration(videoRequest.getDuration());
-        video.setSrcUuid(videoRequest.getSrc());
-        video.setPosterUuid(videoRequest.getPoster());
+
+        // 1. ดึงข้อมูลเดิมออกมาก่อน
+        Video video = videoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Error: Video not found."));
+
+        // 2. เช็คก่อนอัปเดต ถ้าหน้าเว็บไม่ได้ส่งค่ามา (เป็น null) ให้ข้ามไป เพื่อรักษาข้อมูลเดิมไว้
+        if (videoRequest.getTitle() != null) video.setTitle(videoRequest.getTitle());
+        if (videoRequest.getDescription() != null) video.setDescription(videoRequest.getDescription());
+        if (videoRequest.getYear() != null) video.setYear(videoRequest.getYear());
+        if (videoRequest.getRating() != null) video.setRating(videoRequest.getRating());
+        if (videoRequest.getDuration() != null) video.setDuration(videoRequest.getDuration());
+        if (videoRequest.getSrc() != null) video.setSrcUuid(videoRequest.getSrc());
+        if (videoRequest.getPoster() != null) video.setPosterUuid(videoRequest.getPoster());
+
+        // สถานะ Published เป็น boolean ธรรมดา อัปเดตได้เลย
         video.setPublished(videoRequest.isPublished());
-        video.setCategories(videoRequest.getCategories() != null ? videoRequest.getCategories() : List.of());
+
+        // 3. วิธีอัปเดต Categories ที่ถูกต้อง (ห้ามใช้ .setCategories หรือ List.of() เด็ดขาด)
+        if (videoRequest.getCategories() != null) {
+            video.getCategories().clear(); // ล้างของเก่า
+            video.getCategories().addAll(videoRequest.getCategories()); // ยัดของใหม่
+        }
+
+        // 4. บันทึกลง Database
         videoRepository.save(video);
+
         return new MessageResponse("Video update successfully");
     }
 
