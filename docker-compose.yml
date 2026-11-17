@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - movie_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d pulsescreen_video"]
       interval: 5s
@@ -62,7 +62,7 @@ services:
       - postgresql_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
+  movie_postgres_data:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
