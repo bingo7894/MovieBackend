@@ -34,6 +34,6 @@ public interface VideoRepository extends JpaRepository<Video,Long> {
     @Query("SELECT v FROM Video v WHERE v.published = true ORDER BY v.createdAt DESC")
     Page<Video> findPublishedVideos(Pageable pageable);
 
-    @Query("SELECT v FROM Video v WHERE v.published = true ORDER BY FUNCTION('RAND')")
+    @Query("SELECT v FROM Video v WHERE v.published = true ORDER BY FUNCTION('RANDOM')")
     List<Video> findRandomPublishedVideos(Pageable pageable);
 }

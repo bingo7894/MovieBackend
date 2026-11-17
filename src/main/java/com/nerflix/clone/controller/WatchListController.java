@@ -5,8 +5,6 @@ import com.nerflix.clone.dto.response.PageResponse;
 import com.nerflix.clone.dto.response.VideoResponse;
 import com.nerflix.clone.entity.Video;
 import com.nerflix.clone.service.WatchListService;
-import com.oracle.svm.core.annotate.Delete;
-import jakarta.mail.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
