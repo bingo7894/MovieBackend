@@ -17,9 +17,9 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("PulseScreen Movie API")
-                        .version("1.0.0")
-                        .description("API documentation for MovieBackend"))
+                        .title("PulseLearn LMS API")
+                        .version("2.0.0")
+                        .description("API documentation for LMS courses, topics, episodes (EP), learning materials, quizzes, progress, and notes"))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME, new SecurityScheme()

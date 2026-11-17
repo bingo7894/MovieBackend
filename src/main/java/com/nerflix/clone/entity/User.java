@@ -1,20 +1,19 @@
 package com.nerflix.clone.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nerflix.clone.enums.Role;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.ToString;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
-@Data
-@ToString
+@Getter
+@Setter
+@NoArgsConstructor
 @Table(name = "users")
 public class User {
 
@@ -22,7 +21,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false,unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -42,7 +41,7 @@ public class User {
     private boolean emailVerified = false;
 
     @Column(unique = true)
-    private  String verificationToken;
+    private String verificationToken;
 
     @Column
     private Instant verificationTokenExpiry;
@@ -54,28 +53,10 @@ public class User {
     private Instant passwordResetTokenExpiry;
 
     @CreationTimestamp
-    @Column(nullable = false,updatable = false)
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @UpdateTimestamp
     @Column(nullable = false)
     private Instant updateAt;
-
-    @JsonIgnore
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name="user_watchlist",
-            joinColumns =  @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "video_id")
-    )
-    private Set<Video> watchList= new HashSet<>();
-
-    public void addToWatchList(Video video){
-        this.watchList.add(video);
-    }
-
-    public void removeFromWatchList(Video video){
-        this.watchList.remove(video);
-    }
-
 }

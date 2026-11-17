@@ -24,32 +24,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         String jwt = extractJwtToken(request);
         String username = null;
 
-        if(jwt != null){
+        if (jwt != null && jwtUtil.validateToken(jwt)) {
             username = jwtUtil.getUsernameFromToken(jwt);
         }
 
         if (shouldProcessAuthentication(username)) {
-            processAuthentication(request,jwt,username);
+            processAuthentication(request, jwt, username);
         }
 
         filterChain.doFilter(request, response);
     }
 
-
-
-    private String extractJwtToken(HttpServletRequest request){
-
+    private String extractJwtToken(HttpServletRequest request) {
         final String authorizationHeader = request.getHeader("Authorization");
         final String requestURI = request.getRequestURI();
 
-        if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             return authorizationHeader.substring(7);
-        }
-        else if((requestURI.contains("/api/files/video/") || requestURI.contains("/api/files/image/"))
+        } else if ((requestURI.contains("/api/files/video/")
+                || requestURI.contains("/api/files/image/")
+                || requestURI.contains("/api/files/material/"))
                 && request.getParameter("token") != null) {
             return request.getParameter("token");
         }
@@ -57,18 +56,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private boolean shouldProcessAuthentication(String username){
+    private boolean shouldProcessAuthentication(String username) {
         return username != null && SecurityContextHolder.getContext().getAuthentication() == null;
     }
 
     private void processAuthentication(HttpServletRequest request, String jwt, String username) {
-        if(jwtUtil.validateToken(jwt)){
-            UserDetails userDetails = createUserDetailsFromToken(jwt,username);
-            setAuthenticationInContext(request,userDetails);
-        }
+        UserDetails userDetails = createUserDetailsFromToken(jwt, username);
+        setAuthenticationInContext(request, userDetails);
     }
 
-    private UserDetails createUserDetailsFromToken(String jwt,String username){
+    private UserDetails createUserDetailsFromToken(String jwt, String username) {
         String role = jwtUtil.getRoleFromToken(jwt);
 
         return User.builder()
@@ -79,10 +76,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void setAuthenticationInContext(HttpServletRequest request, UserDetails userDetails) {
-
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-
     }
 }

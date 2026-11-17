@@ -14,9 +14,10 @@ import com.nerflix.clone.service.AuthService;
 import com.nerflix.clone.service.EmailService;
 import com.nerflix.clone.util.ServiceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -39,25 +40,38 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private ServiceUtils serviceUtils;
 
-    @Override
-    public MessageResponse signup(UserRequest userRequest) {
+    @Value("${app.mail.enabled:false}")
+    private boolean mailEnabled;
 
-        if(userRepository.existsByEmail(userRequest.getEmail())){
-            throw  new EmailAlreadyExistsException("Email already exists.");
+    @Override
+    @Transactional
+    public MessageResponse signup(UserRequest userRequest) {
+        User existing = userRepository.findByEmail(userRequest.getEmail()).orElse(null);
+        if (existing != null && existing.isEmailVerified()) {
+            throw new EmailAlreadyExistsException("Email already exists.");
         }
 
-        User user = new User();
+        User user = existing != null ? existing : new User();
         user.setEmail(userRequest.getEmail());
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         user.setFullName(userRequest.getFullname());
         user.setRole(Role.USER);
         user.setActive(true);
+
+        if (!mailEnabled) {
+            user.setEmailVerified(true);
+            user.setVerificationToken(null);
+            user.setVerificationTokenExpiry(null);
+            userRepository.save(user);
+            return new MessageResponse("Registration successful! You can now login.");
+        }
+
         user.setEmailVerified(false);
         String verificationToken = UUID.randomUUID().toString();
         user.setVerificationToken(verificationToken);
         user.setVerificationTokenExpiry(Instant.now().plusSeconds(86400));
         userRepository.save(user);
-        emailService.sendVerificationEmail(userRequest.getEmail(),verificationToken);
+        emailService.sendVerificationEmail(userRequest.getEmail(), verificationToken);
 
         return new MessageResponse("Registration successful! Please check your email to verify your account");
     }
@@ -111,6 +125,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public MessageResponse resendVerificationEmail(String email) {
         User user = serviceUtils.getUserByEmailOrThrow(email);
+
+        if (!mailEnabled) {
+            user.setEmailVerified(true);
+            user.setVerificationToken(null);
+            user.setVerificationTokenExpiry(null);
+            userRepository.save(user);
+            return new MessageResponse("Email verified! You can now login.");
+        }
 
         String verificationToken = UUID.randomUUID().toString();
         user.setVerificationToken(verificationToken);

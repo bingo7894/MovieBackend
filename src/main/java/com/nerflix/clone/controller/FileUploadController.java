@@ -3,9 +3,9 @@ package com.nerflix.clone.controller;
 import com.nerflix.clone.service.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.data.repository.query.Param;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Repository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,39 +17,59 @@ import java.util.Map;
 public class FileUploadController {
 
     @Autowired
-    FileUploadService fileUploadService;
+    private FileUploadService fileUploadService;
 
-    @PostMapping("/upload/video")
-    public ResponseEntity<Map<String,String>> uploadVideo(@RequestParam("file")MultipartFile file){
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping(value = "/upload/video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> uploadVideo(@RequestParam("file") MultipartFile file) {
         String uuid = fileUploadService.storeVideoFile(file);
-        return ResponseEntity.ok(buildUploadResponse(uuid,file));
+        return ResponseEntity.ok(buildUploadResponse(uuid, file));
     }
 
-    @PostMapping("/upload/image")
-    public ResponseEntity<Map<String,String>> uploadImage(@RequestParam("file") MultipartFile file){
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping(value = "/upload/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
         String uuid = fileUploadService.storeImageFile(file);
-        return ResponseEntity.ok(buildUploadResponse(uuid,file));
+        return ResponseEntity.ok(buildUploadResponse(uuid, file));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping(value = "/upload/material", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> uploadMaterial(@RequestParam("file") MultipartFile file) {
+        String uuid = fileUploadService.storeMaterialFile(file);
+        return ResponseEntity.ok(buildUploadResponse(uuid, file));
     }
 
     private Map<String, String> buildUploadResponse(String uuid, MultipartFile file) {
-        Map<String,String> response = new HashMap<>();
-        response.put("uuid",uuid);
+        Map<String, String> response = new HashMap<>();
+        response.put("uuid", uuid);
         response.put("size", String.valueOf(file.getSize()));
         response.put("filename", file.getOriginalFilename());
+        response.put("contentType", file.getContentType());
         return response;
     }
 
     @GetMapping("/video/{uuid}")
     public ResponseEntity<Resource> serveVideo(
             @PathVariable String uuid,
-            @RequestHeader(value = "Range",required = false)String rangeHeader,
-            @RequestParam(value = "token",required = false)String tokenParam){
-        return fileUploadService.serveVideo(uuid,rangeHeader);
+            @RequestHeader(value = "Range", required = false) String rangeHeader,
+            @RequestParam(value = "token", required = false) String tokenParam) {
+        return fileUploadService.serveVideo(uuid, rangeHeader);
     }
 
     @GetMapping("/image/{uuid}")
-    public  ResponseEntity<Resource> serImage(@PathVariable String uuid){
+    public ResponseEntity<Resource> serveImage(
+            @PathVariable String uuid,
+            @RequestParam(value = "token", required = false) String tokenParam) {
         return fileUploadService.serveImage(uuid);
     }
 
+    @GetMapping("/material/{uuid}")
+    public ResponseEntity<Resource> serveMaterial(
+            @PathVariable String uuid,
+            @RequestParam(value = "download", defaultValue = "false") boolean download,
+            @RequestParam(value = "filename", required = false) String filename,
+            @RequestParam(value = "token", required = false) String tokenParam) {
+        return fileUploadService.serveMaterial(uuid, download, filename);
+    }
 }

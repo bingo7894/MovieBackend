@@ -26,15 +26,21 @@ public class EmailServiceImpi implements EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Value("${app.mail.enabled:false}")
+    private boolean mailEnabled;
+
     @Override
     public void sendVerificationEmail(String toEmail, String token) {
-        try{
+        String verificationLink = frontendUrl + "/verify-email?token=" + token;
+        if (!mailEnabled) {
+            logger.info("[MAIL DISABLED] Verification link for {}: {}", toEmail, verificationLink);
+            return;
+        }
+        try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject("Netflix Clone - Verify Your Email");
-
-            String verificationLink = frontendUrl+"/verify-email?token="+token;
+            message.setSubject("PulseLearn LMS - Verify Your Email");
 
             String emailBody =
                     "Welcome to Netflix Clone!\n\n"
@@ -58,13 +64,16 @@ public class EmailServiceImpi implements EmailService {
 
     @Override
     public void sendPasswordResetEmail(String toEmail, String token) {
-        try{
+        String resetLink = frontendUrl + "/reset-password?token=" + token;
+        if (!mailEnabled) {
+            logger.info("[MAIL DISABLED] Password reset link for {}: {}", toEmail, resetLink);
+            return;
+        }
+        try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(toEmail);
-            message.setSubject("Netflix Clone - Password Reset");
-
-            String resetLink = frontendUrl + "/reset-password?token=" +token;
+            message.setSubject("PulseLearn LMS - Password Reset");
 
             String emailBody =
                     "Hi,\n\n"

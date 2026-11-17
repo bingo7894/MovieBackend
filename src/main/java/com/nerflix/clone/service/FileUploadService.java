@@ -13,7 +13,11 @@ public interface FileUploadService {
 
     String storeImageFile(MultipartFile file);
 
+    String storeMaterialFile(MultipartFile file);
+
     ResponseEntity<Resource> serveVideo(String uuid, String rangeHeader);
 
     ResponseEntity<Resource> serveImage(String uuid);
+
+    ResponseEntity<Resource> serveMaterial(String uuid, boolean download, String customFilename);
 }

@@ -1,5 +1,9 @@
 package com.nerflix.clone.serviceimpl;
 
+import com.nerflix.clone.dao.EnrollmentRepository;
+import com.nerflix.clone.dao.LessonNoteRepository;
+import com.nerflix.clone.dao.LessonProgressRepository;
+import com.nerflix.clone.dao.QuizAttemptRepository;
 import com.nerflix.clone.dao.UserRepository;
 import com.nerflix.clone.dto.request.UserRequest;
 import com.nerflix.clone.dto.response.MessageResponse;
@@ -15,9 +19,11 @@ import com.nerflix.clone.service.UserService;
 import com.nerflix.clone.util.PaginationUtils;
 import com.nerflix.clone.util.ServiceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -38,7 +44,23 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private LessonProgressRepository lessonProgressRepository;
+
+    @Autowired
+    private QuizAttemptRepository quizAttemptRepository;
+
+    @Autowired
+    private LessonNoteRepository lessonNoteRepository;
+
+    @Value("${app.mail.enabled:false}")
+    private boolean mailEnabled;
+
     @Override
+    @Transactional
     public MessageResponse createUser(UserRequest userRequest) {
         if(userRepository.findByEmail(userRequest.getEmail()).isPresent()){
             throw new EmailAlreadyExistsException("Email already exists");
@@ -52,6 +74,11 @@ public class UserServiceImpl implements UserService {
         user.setFullName(userRequest.getFullname());
         user.setRole(Role.valueOf(userRequest.getRole().toUpperCase()));
         user.setActive(true);
+        if (!mailEnabled) {
+            user.setEmailVerified(true);
+            userRepository.save(user);
+            return new MessageResponse("User created successfully.");
+        }
         String verificationToken = UUID.randomUUID().toString();
         user.setVerificationToken(verificationToken);
         user.setVerificationTokenExpiry(Instant.now().plusSeconds(86400));
@@ -107,6 +134,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public MessageResponse deleteUser(Long id, String currentUserEmail) {
         User user = serviceUtils.getUserByIdOrThrow(id);
 
@@ -115,6 +143,11 @@ public class UserServiceImpl implements UserService {
         }
 
         ensureNotLastActiveAdmin(user,"delete");
+
+        lessonNoteRepository.deleteByUserId(id);
+        lessonProgressRepository.deleteByUserId(id);
+        quizAttemptRepository.deleteByUserId(id);
+        enrollmentRepository.deleteByUserId(id);
 
         userRepository.deleteById(id);
         return new MessageResponse("User deleted successfully. ");

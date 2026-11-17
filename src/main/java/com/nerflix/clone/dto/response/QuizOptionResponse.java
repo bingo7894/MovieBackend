@@ -7,9 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class VideoStatsResponse {
-
-    private  long totalVideos;
-    private long publishedVideos;
-    private long totalDuration;
+public class QuizOptionResponse {
+    private Long id;
+    private String optionText;
+    private Boolean correct;
 }
