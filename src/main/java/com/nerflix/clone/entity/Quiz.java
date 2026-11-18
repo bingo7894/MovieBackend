@@ -32,6 +32,12 @@ public class Quiz {
     private Integer passingScore = 70;
 
     @Column(nullable = false)
+    private Integer timeLimitMinutes = 0;
+
+    @Column(nullable = false)
+    private boolean shuffleQuestions = false;
+
+    @Column(nullable = false)
     private boolean published = true;
 
     @ManyToOne(fetch = FetchType.LAZY)

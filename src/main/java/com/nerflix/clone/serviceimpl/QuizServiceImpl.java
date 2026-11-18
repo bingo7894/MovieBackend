@@ -179,6 +179,14 @@ public class QuizServiceImpl implements QuizService {
             throw new IllegalArgumentException("Passing score must be between 0 and 100");
         }
         quiz.setPassingScore(passing);
+        int timeLimit = request.getTimeLimitMinutes() != null ? request.getTimeLimitMinutes() : 0;
+        if (timeLimit < 0) {
+            throw new IllegalArgumentException("Time limit must be 0 or positive");
+        }
+        quiz.setTimeLimitMinutes(timeLimit);
+        if (request.getShuffleQuestions() != null) {
+            quiz.setShuffleQuestions(request.getShuffleQuestions());
+        }
         if (request.getPublished() != null) {
             quiz.setPublished(request.getPublished());
         }

@@ -28,6 +28,9 @@ public class ServiceUtils {
     @Autowired
     private QuizRepository quizRepository;
 
+    @Autowired
+    private EpisodeDiscussionRepository discussionRepository;
+
     public User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
@@ -61,6 +64,11 @@ public class ServiceUtils {
     public Quiz getQuizByIdOrThrow(Long id) {
         return quizRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found with id: " + id));
+    }
+
+    public EpisodeDiscussion getDiscussionByIdOrThrow(Long id) {
+        return discussionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Discussion not found with id: " + id));
     }
 
     public String extractUuid(String value) {

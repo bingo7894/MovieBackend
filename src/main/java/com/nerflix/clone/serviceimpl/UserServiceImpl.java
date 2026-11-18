@@ -1,6 +1,10 @@
 package com.nerflix.clone.serviceimpl;
 
+import com.nerflix.clone.dao.CourseCertificateRepository;
+import com.nerflix.clone.dao.CourseReviewRepository;
+import com.nerflix.clone.dao.DiscussionReplyRepository;
 import com.nerflix.clone.dao.EnrollmentRepository;
+import com.nerflix.clone.dao.EpisodeDiscussionRepository;
 import com.nerflix.clone.dao.LessonNoteRepository;
 import com.nerflix.clone.dao.LessonProgressRepository;
 import com.nerflix.clone.dao.QuizAttemptRepository;
@@ -55,6 +59,18 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private LessonNoteRepository lessonNoteRepository;
+
+    @Autowired
+    private CourseCertificateRepository courseCertificateRepository;
+
+    @Autowired
+    private CourseReviewRepository courseReviewRepository;
+
+    @Autowired
+    private EpisodeDiscussionRepository episodeDiscussionRepository;
+
+    @Autowired
+    private DiscussionReplyRepository discussionReplyRepository;
 
     @Value("${app.mail.enabled:false}")
     private boolean mailEnabled;
@@ -144,6 +160,14 @@ public class UserServiceImpl implements UserService {
 
         ensureNotLastActiveAdmin(user,"delete");
 
+        discussionReplyRepository.deleteByUserId(id);
+        var userDiscussionIds = episodeDiscussionRepository.findIdsByUserId(id);
+        if (!userDiscussionIds.isEmpty()) {
+            discussionReplyRepository.deleteByDiscussionIdIn(userDiscussionIds);
+        }
+        episodeDiscussionRepository.deleteByUserId(id);
+        courseReviewRepository.deleteByUserId(id);
+        courseCertificateRepository.deleteByUserId(id);
         lessonNoteRepository.deleteByUserId(id);
         lessonProgressRepository.deleteByUserId(id);
         quizAttemptRepository.deleteByUserId(id);

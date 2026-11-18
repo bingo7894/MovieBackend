@@ -24,6 +24,31 @@ public class CourseSummaryResponse {
     private boolean enrolled;
     private int completedEpisodes;
     private int progressPercent;
+    private double averageRating;
+    private long reviewCount;
+    private long enrollmentCount;
     private Instant createdAt;
     private Instant updatedAt;
+
+    public CourseSummaryResponse(
+            Long id,
+            String title,
+            String description,
+            String thumbnail,
+            String thumbnailUuid,
+            String category,
+            String level,
+            boolean published,
+            int topicCount,
+            int episodeCount,
+            long totalDuration,
+            boolean enrolled,
+            int completedEpisodes,
+            int progressPercent,
+            Instant createdAt,
+            Instant updatedAt) {
+        this(id, title, description, thumbnail, thumbnailUuid, category, level, published,
+                topicCount, episodeCount, totalDuration, enrolled, completedEpisodes, progressPercent,
+                0.0, 0L, 0L, createdAt, updatedAt);
+    }
 }

@@ -132,6 +132,7 @@ public class LearningProgressServiceImpl implements LearningProgressService {
         List<CourseSummaryResponse> responses = courses.stream()
                 .map(c -> lmsMapper.toCourseSummary(c, true, progressMap, false))
                 .toList();
+        lmsDataHelper.enrichCourseSummaryStats(responses);
         return PaginationUtils.toPageResponse(enrollmentPage, responses);
     }
 

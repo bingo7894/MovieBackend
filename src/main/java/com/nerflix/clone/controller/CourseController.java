@@ -40,6 +40,12 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getFeaturedCourses(authentication.getName()));
     }
 
+    @Operation(summary = "Get courses the learner recently started and has not completed yet")
+    @GetMapping("/courses/in-progress")
+    public ResponseEntity<List<CourseSummaryResponse>> getInProgressCourses(Authentication authentication) {
+        return ResponseEntity.ok(courseService.getInProgressCourses(authentication.getName()));
+    }
+
     @Operation(summary = "Get full course curriculum (topics, episodes, attachments, quizzes, progress)")
     @GetMapping("/courses/{id}")
     public ResponseEntity<CourseDetailResponse> getCourseDetailForLearner(

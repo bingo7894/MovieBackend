@@ -12,8 +12,22 @@ public class QuizSummaryResponse {
     private String title;
     private String description;
     private Integer passingScore;
+    private Integer timeLimitMinutes;
+    private boolean shuffleQuestions;
     private boolean published;
     private int questionCount;
     private Integer bestScore;
     private Boolean passed;
+
+    public QuizSummaryResponse(
+            Long id,
+            String title,
+            String description,
+            Integer passingScore,
+            boolean published,
+            int questionCount,
+            Integer bestScore,
+            Boolean passed) {
+        this(id, title, description, passingScore, 0, false, published, questionCount, bestScore, passed);
+    }
 }

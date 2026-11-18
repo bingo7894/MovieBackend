@@ -19,6 +19,10 @@ public class QuizRequest {
 
     private Integer passingScore;
 
+    private Integer timeLimitMinutes;
+
+    private Boolean shuffleQuestions;
+
     private Boolean published;
 
     @Valid

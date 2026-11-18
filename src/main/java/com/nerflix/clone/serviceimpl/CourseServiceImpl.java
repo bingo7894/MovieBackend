@@ -39,6 +39,15 @@ public class CourseServiceImpl implements CourseService {
     private EnrollmentRepository enrollmentRepository;
 
     @Autowired
+    private LessonProgressRepository lessonProgressRepository;
+
+    @Autowired
+    private CourseCertificateRepository courseCertificateRepository;
+
+    @Autowired
+    private CourseReviewRepository courseReviewRepository;
+
+    @Autowired
     private ServiceUtils serviceUtils;
 
     @Autowired
@@ -70,6 +79,7 @@ public class CourseServiceImpl implements CourseService {
         List<CourseSummaryResponse> content = coursePage.getContent().stream()
                 .map(c -> lmsMapper.toCourseSummary(c, false, Map.of(), true))
                 .toList();
+        lmsDataHelper.enrichCourseSummaryStats(content);
         return PaginationUtils.toPageResponse(coursePage, content);
     }
 
@@ -98,6 +108,8 @@ public class CourseServiceImpl implements CourseService {
         Course course = serviceUtils.getCourseByIdOrThrow(id);
         List<Long> episodeIds = episodeRepository.findAllEpisodeIdsByCourseId(id);
         lmsDataHelper.deleteEpisodeDependencies(episodeIds);
+        courseCertificateRepository.deleteByCourseId(id);
+        courseReviewRepository.deleteByCourseId(id);
         enrollmentRepository.deleteByCourseId(id);
         courseRepository.delete(course);
         return new MessageResponse("Course deleted successfully.");
@@ -153,6 +165,7 @@ public class CourseServiceImpl implements CourseService {
         List<CourseSummaryResponse> responses = courses.stream()
                 .map(c -> lmsMapper.toCourseSummary(c, enrolledIds.contains(c.getId()), progressMap, false))
                 .toList();
+        lmsDataHelper.enrichCourseSummaryStats(responses);
         return PaginationUtils.toPageResponse(coursePage, responses);
     }
 
@@ -165,9 +178,43 @@ public class CourseServiceImpl implements CourseService {
         Set<Long> enrolledIds = lmsDataHelper.loadEnrolledCourseIds(user.getId(), courses);
         Map<Long, LessonProgress> progressMap = lmsDataHelper.loadProgressMapForCourses(user.getId(), courses);
 
-        return courses.stream()
+        List<CourseSummaryResponse> responses = courses.stream()
                 .map(c -> lmsMapper.toCourseSummary(c, enrolledIds.contains(c.getId()), progressMap, false))
                 .toList();
+        lmsDataHelper.enrichCourseSummaryStats(responses);
+        return responses;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CourseSummaryResponse> getInProgressCourses(String email) {
+        User user = serviceUtils.getUserByEmailOrThrow(email);
+        List<Long> recentCourseIds = lessonProgressRepository.findRecentCourseIdsByUserId(user.getId());
+        if (recentCourseIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> limitedIds = recentCourseIds.stream().limit(6).toList();
+        Map<Long, Course> byId = new HashMap<>();
+        for (Course c : courseRepository.findAllById(limitedIds)) {
+            if (c.isPublished()) {
+                byId.put(c.getId(), c);
+            }
+        }
+        List<Course> orderedCourses = limitedIds.stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .toList();
+        if (orderedCourses.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> enrolledIds = lmsDataHelper.loadEnrolledCourseIds(user.getId(), orderedCourses);
+        Map<Long, LessonProgress> progressMap = lmsDataHelper.loadProgressMapForCourses(user.getId(), orderedCourses);
+        List<CourseSummaryResponse> responses = orderedCourses.stream()
+                .map(c -> lmsMapper.toCourseSummary(c, enrolledIds.contains(c.getId()), progressMap, false))
+                .filter(c -> c.getEpisodeCount() > 0 && c.getCompletedEpisodes() < c.getEpisodeCount())
+                .toList();
+        lmsDataHelper.enrichCourseSummaryStats(responses);
+        return responses;
     }
 
     @Override
@@ -187,7 +234,23 @@ public class CourseServiceImpl implements CourseService {
         Map<Long, LessonProgress> progressMap = lmsDataHelper.loadProgressMapForEpisodeIds(user.getId(), episodeIds);
         Map<Long, List<QuizAttempt>> attemptsMap = lmsDataHelper.loadAttemptsMapForCourse(user.getId(), course);
 
-        return lmsMapper.toCourseDetail(course, enrolled, progressMap, attemptsMap, false);
+        CourseDetailResponse detail = lmsMapper.toCourseDetail(course, enrolled, progressMap, attemptsMap, false);
+
+        Double avg = courseReviewRepository.getAverageRatingForCourse(courseId);
+        detail.setAverageRating(avg != null ? Math.round(avg * 10.0) / 10.0 : 0.0);
+        detail.setReviewCount(courseReviewRepository.countByCourseId(courseId));
+        detail.setEnrollmentCount(enrollmentRepository.countByCourseId(courseId));
+
+        boolean allQuizzesPassed = detail.getTopics().stream()
+                .flatMap(t -> t.getEpisodes().stream())
+                .flatMap(e -> e.getQuizzes().stream())
+                .allMatch(q -> Boolean.TRUE.equals(q.getPassed()));
+        detail.setAllQuizzesPassed(allQuizzesPassed);
+        detail.setCertificateEligible(detail.getEpisodeCount() > 0 && detail.getProgressPercent() >= 100 && allQuizzesPassed);
+        courseCertificateRepository.findByUserIdAndCourseId(user.getId(), courseId)
+                .ifPresent(cert -> detail.setCertificateCode(cert.getCertificateCode()));
+
+        return detail;
     }
 
     private void applyCourseFields(Course course, CourseRequest request) {

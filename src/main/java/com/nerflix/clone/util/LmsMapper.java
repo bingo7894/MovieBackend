@@ -218,6 +218,8 @@ public class LmsMapper {
                 quiz.getTitle(),
                 quiz.getDescription(),
                 quiz.getPassingScore(),
+                quiz.getTimeLimitMinutes() != null ? quiz.getTimeLimitMinutes() : 0,
+                quiz.isShuffleQuestions(),
                 quiz.isPublished(),
                 quiz.getQuestions().size(),
                 bestScore,
@@ -226,7 +228,7 @@ public class LmsMapper {
     }
 
     public QuizDetailResponse toQuizDetail(Quiz quiz, boolean includeAnswers) {
-        List<QuizQuestionResponse> questionResponses = quiz.getQuestions().stream()
+        List<QuizQuestionResponse> questionResponses = new ArrayList<>(quiz.getQuestions().stream()
                 .map(q -> new QuizQuestionResponse(
                         q.getId(),
                         q.getQuestionText(),
@@ -240,16 +242,87 @@ public class LmsMapper {
                                         includeAnswers ? opt.isCorrect() : null))
                                 .toList()
                 ))
-                .toList();
+                .toList());
+
+        if (!includeAnswers && quiz.isShuffleQuestions()) {
+            Collections.shuffle(questionResponses);
+        }
 
         return new QuizDetailResponse(
                 quiz.getId(),
                 quiz.getTitle(),
                 quiz.getDescription(),
                 quiz.getPassingScore(),
+                quiz.getTimeLimitMinutes() != null ? quiz.getTimeLimitMinutes() : 0,
+                quiz.isShuffleQuestions(),
                 quiz.isPublished(),
                 quiz.getEpisode().getId(),
                 questionResponses
+        );
+    }
+
+    public CertificateResponse toCertificateResponse(CourseCertificate cert) {
+        Course course = cert.getCourse();
+        return new CertificateResponse(
+                cert.getId(),
+                cert.getCertificateCode(),
+                course != null ? course.getId() : null,
+                cert.getCourseTitle(),
+                course != null ? course.getCategory() : null,
+                course != null && course.getLevel() != null ? course.getLevel().name() : null,
+                cert.getRecipientName(),
+                cert.getUser() != null ? cert.getUser().getEmail() : null,
+                cert.getTotalEpisodes(),
+                cert.getTotalDuration(),
+                cert.getIssuedAt(),
+                true
+        );
+    }
+
+    public DiscussionResponse toDiscussionResponse(EpisodeDiscussion d, Long currentUserId) {
+        List<DiscussionReplyResponse> replyResponses = d.getReplies().stream()
+                .map(r -> new DiscussionReplyResponse(
+                        r.getId(),
+                        d.getId(),
+                        r.getUser().getId(),
+                        r.getUser().getFullName(),
+                        r.isInstructorReply(),
+                        r.getContent(),
+                        currentUserId != null && r.getUser().getId().equals(currentUserId),
+                        r.getCreatedAt()
+                ))
+                .toList();
+
+        boolean authorIsAdmin = d.getUser().getRole() != null && d.getUser().getRole().name().equals("ADMIN");
+        return new DiscussionResponse(
+                d.getId(),
+                d.getEpisode().getId(),
+                d.getUser().getId(),
+                d.getUser().getFullName(),
+                authorIsAdmin,
+                d.getTitle(),
+                d.getContent(),
+                d.getVideoTimestamp(),
+                d.isResolved(),
+                d.isPinned(),
+                currentUserId != null && d.getUser().getId().equals(currentUserId),
+                d.getCreatedAt(),
+                d.getUpdatedAt(),
+                replyResponses
+        );
+    }
+
+    public ReviewResponse toReviewResponse(CourseReview review, Long currentUserId) {
+        return new ReviewResponse(
+                review.getId(),
+                review.getCourse().getId(),
+                review.getUser().getId(),
+                review.getUser().getFullName(),
+                review.getRating(),
+                review.getComment(),
+                currentUserId != null && review.getUser().getId().equals(currentUserId),
+                review.getCreatedAt(),
+                review.getUpdatedAt()
         );
     }
 

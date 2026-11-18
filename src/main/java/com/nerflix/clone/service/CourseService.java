@@ -24,5 +24,7 @@ public interface CourseService {
 
     List<CourseSummaryResponse> getFeaturedCourses(String email);
 
+    List<CourseSummaryResponse> getInProgressCourses(String email);
+
     CourseDetailResponse getCourseDetailForLearner(Long courseId, String email);
 }
